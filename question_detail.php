@@ -99,6 +99,31 @@ for($i = 0 ; $i < $cnt ; $i++){
         ?>
         <div class="card my-4">
           <h5 class="card-header">Live Question</h5>
+          <div class="dropdown" style="padding:20px; padding-bottom:0;">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Language
+            </button>
+            <?php 
+              $url = $_SERVER['REQUEST_URI'];
+              $langpos = strpos( $url ,"&lang");
+              if(isset($_GET["lang"])){
+                $noLangUrl = substr($url,0,$langpos);
+              }
+              else{
+                $noLangUrl = $url;
+              }
+            ?>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="<?php echo $noLangUrl;?>">none</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=ko";?>">ko</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=en";?>">en</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=zh-CN";?>">cn</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=ja";?>">jp</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=fr";?>">fr</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=de";?>">de</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=it";?>">it</a>
+            </div>
+          </div>
           <div class="card-body">
               <!-- Search Widget -->
               <div class="card my-4">
@@ -120,7 +145,16 @@ for($i = 0 ; $i < $cnt ; $i++){
               <div class="card my-4">
                 <h5 class="card-header">Contents</h5>
                 <div class="card-body">
-					<?php echo $result_contents; ?>
+                    <?php 
+                    echo $result_contents; 
+                    if(isset($_GET["lang"])){
+                      include 'translate.php';
+                      echo "<h4> translated </h4>";
+                      $transelatedContents = translate($contents,$_GET["lang"]);
+                      echo $transelatedContents;
+                    }
+                    
+                  ?>
                 </div>
               </div>
 
@@ -141,7 +175,13 @@ for($i = 0 ; $i < $cnt ; $i++){
 			if ($result->num_rows > 0) {
 			  $count = 1;
 			  while($row = $result->fetch_assoc()) {
-			  echo $count.": ".$row["contents"]."  - <a href=\"./selection.php?ix=".$row["ix"]."\"> accept</a><br>";
+          echo $count.": ".$row["contents"]."  - <a href=\"./selection.php?ix=".$row["ix"]."\"> accept</a><br>";
+          if(isset($_GET["lang"])){
+            echo "<h6>&nbsp;translated </h6>";
+            $transelatedContents = translate($row["contents"],$_GET["lang"]);
+            echo "&nbsp;".$transelatedContents."<br>";
+            
+          }
 			  $count += 1;
 			  }
 			}

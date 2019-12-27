@@ -11,6 +11,36 @@ if(!isset($_SESSION['user_id'])) {
 }
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
+
+
+// get 방식으로 전달받은 ix 게시글을 선택하여 출력
+$conn = sql();
+$sql = "select * from question where ix = ".$_GET["ix"].";";
+$result = $conn->query($sql);
+$row = $result->fetch_assoc();
+// 게시글 내용 저장하여 해시태그 파싱
+$contents = $row['contents'];
+echo "<script>alert($contents);</script>";
+$strTok =explode(' ' , $contents); // 띄어쓰기 단위로 문자열 슬라이스
+$cnt = count($strTok);			   // 총 어절 수
+$result_contents = "";
+for($i = 0 ; $i < $cnt ; $i++){
+	if(empty($strTok[$i])) continue;	
+	if( $strTok[$i][0] == '#') {
+                $word = $strTok[$i];
+                $sql = "SELECT * from hashtag where word = \"$word\"";
+                $res = $conn->query($sql);
+                // 테이블에 존재하지 않으면 해시태그 삽입
+                if($res->num_rows == 0){
+                        $sql = "INSERT into hashtag (word) VALUES ('$word')";
+                        $conn->query($sql);
+                }
+				// 해시태그가 존재하면 링킹
+				$strTok[$i] = "<a href='find.php?keyword=".urlencode($strTok[$i])."'>".$strTok[$i]."</a>";
+		}
+		$result_contents = $result_contents.$strTok[$i].' '; 
+}
+
 ?>
 
 <head>
@@ -70,6 +100,31 @@ $user_name = $_SESSION['user_name'];
         ?>
         <div class="card my-4">
           <h5 class="card-header">Solved Question</h5>
+          <div class="dropdown" style="padding:20px; padding-bottom:0;">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Language
+            </button>
+            <?php 
+              $url = $_SERVER['REQUEST_URI'];
+              $langpos = strpos( $url ,"&lang");
+              if(isset($_GET["lang"])){
+                $noLangUrl = substr($url,0,$langpos);
+              }
+              else{
+                $noLangUrl = $url;
+              }
+            ?>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="<?php echo $noLangUrl;?>">none</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=ko";?>">ko</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=en";?>">en</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=zh-CN";?>">cn</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=ja";?>">jp</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=fr";?>">fr</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=de";?>">de</a>
+              <a class="dropdown-item" href="<?php echo $noLangUrl."&lang=it";?>">it</a>
+            </div>
+          </div>
           <div class="card-body">
               <!-- Search Widget -->
               <div class="card my-4">
@@ -91,12 +146,22 @@ $user_name = $_SESSION['user_name'];
               <div class="card my-4">
                 <h5 class="card-header">Contents</h5>
                 <div class="card-body">
-                  <?php echo $row['contents']; ?>
+                  <?php 
+                    $result_contents;
+                    echo $result_contents; 
+                    if(isset($_GET["lang"])){
+                      include 'translate.php';
+                      echo "<h4> translated </h4>";
+                      $transelatedContents = translate($contents,$_GET["lang"]);
+                      echo $transelatedContents;
+                    }
+                    
+                  ?>
                 </div>
               </div>
 
               <div class="card my-4">
-                <h5 class="card-header">Best Comments</h5>
+                <h5 class="card-header">Best Comment</h5>
                 <div class="card-body">
                 <?php
                   $conn = sql();
@@ -104,9 +169,45 @@ $user_name = $_SESSION['user_name'];
                   $result = $conn->query($sql);
                   $row = $result->fetch_assoc();
                   echo $row["contents"];
-                  ?>                
+                  if(isset($_GET["lang"])){
+                    echo "<h6>&nbsp;translated </h6>";
+                    $transelatedContents = translate($row["contents"],$_GET["lang"]);
+                    echo "&nbsp;".$transelatedContents."<br>";
+                    
+                  }
+                    
+                  ?>          
+                      
                 </div>
               </div>
+              <div class="card my-4">
+                <h5 class="card-header">All Comments</h5>
+                <div class="card-body">
+                <li style="list-style:none;">
+                <?php
+                $conn = sql();
+                $sql = "select ix, contents from answer where question_ix = ".$_GET["ix"];
+                $result = $conn->query($sql);
+                if ($result->num_rows > 0) {
+                  $count = 1;
+                  while($row = $result->fetch_assoc()) {
+                    echo $count.": ".$row["contents"]." <br>";
+                    if(isset($_GET["lang"])){
+                      echo "<h6>&nbsp;translated </h6>";
+                      $transelatedContents = translate($row["contents"],$_GET["lang"]);
+                      echo "&nbsp;".$transelatedContents."<br>";
+                      
+                    }
+                  $count += 1;
+                  }
+                }
+                ?>
+                </li>        
+                      
+                </div>
+              </div>
+
+
               <a href='solved_question_list.php' class="btn btn-custom service-gap">
               Back
               </a>

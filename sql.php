@@ -1,13 +1,11 @@
 <?php
     function sql(){
-    $host = 'localhost';
+    $host = '127.0.0.1:3307';
     $user = 'root';
-    $pw = '!1Qaz@wsx';
+    $pw = 'ehgns123#';
     $dbName = 'gbsns';
     $mysqli = new mysqli($host, $user, $pw, $dbName);
-
     /*
-    127.0.0.1:3307
     if($mysqli->connection_error){
         echo "MySQL 접속 실패";
     }else{
